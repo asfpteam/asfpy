@@ -4,6 +4,8 @@ ASFPy methods
 Say some things about it here.
 """
 
+import operator
+
 #################################################
 # Constants
 #
@@ -18,7 +20,7 @@ LIM = "lim"
 SCHOOL = "du"
 
 #################################################
-# Methods
+# APPLICANT-ONLY METHODS
 #################################################
 
 def rank(applicant):
@@ -52,3 +54,27 @@ def prioritize(applicants):
         a["rank"] = rank(a)
     applicants.sort(key = operator.itemgetter("rank"))
     return applicants
+
+#################################################
+# EDITOR-ONLY METHODS
+#################################################
+
+def editors_by_role(editors, role):
+    """
+    Get a sublist of editors by role.
+    """
+    return [e for e in editors if e["role"] == role]
+
+def editors_by_category(editors, category):
+    """
+    Get a sublist of editors by category
+    """
+    return [e for e in editors if category in e["categories"]]
+
+def capacity(editors):
+    """
+    Compute editing capacity, the number of statements an editor
+    can read, for a list of editors.
+    """
+    return sum(e["capacity"] for e in editors)
+
