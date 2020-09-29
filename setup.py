@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="asfp",
+    name="asfpy-aridyckovsky",
     version="0.1.0",
     author="Ari Dyckovsky",
     author_email="aridyckovsky@gmail.com",
