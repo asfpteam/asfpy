@@ -5,13 +5,13 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="asfpy-aridyckovsky",
-    version="0.1.0",
+    version="0.1.2",
     author="Ari Dyckovsky",
     author_email="aridyckovsky@gmail.com",
     description="A collection of Python scripts for the Application Statement Feedback Program's logistics needs",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://https://github.com/aridyckovsky/asfpy",
+    url="https://github.com/aridyckovsky/asfpy",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
