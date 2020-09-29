@@ -190,8 +190,8 @@ def allocate(applicants, editors):
         else:
 
             _match = {
-                    "applicant": applicant["id"],
-                    "editors": []
+                "applicant": applicant["id"],
+                "editors": []
             }
 
             faculty_editors = editors_by_role(potential_editors, "faculty")
