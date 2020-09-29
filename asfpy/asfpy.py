@@ -4,7 +4,7 @@ ASFPy methods
 Say some things about it here.
 """
 
-import operator
+from operator import itemgetter
 
 #################################################
 # Constants
@@ -85,7 +85,7 @@ def prioritize(applicants, rank_method = asfp_rank):
     """
     for a in applicants:
         a["rank"] = rank_method(a)
-    return sorted(applicants, key = operator.itemgetter("rank"))
+    return sorted(applicants, key = itemgetter("rank"))
 
 #################################################
 # EDITOR-ONLY METHODS
@@ -110,9 +110,33 @@ def capacity(editors):
     """
     return sum(e["capacity"] for e in editors)
 
-def sort_editors_by_capacity(editors):
+
+def find_highest_capacity_editors(applicant, editors):
     """
-    Sort editors by capacity.
+    Find the highest capacity group of editors (by category) based on
+    available based on stated category preferences of an applicant.
+
+    Parameters
+    ----------
+    applicant: dict
+        The dict object representing an applicant that has categories
+        in a set.
+    editors: list
+        The editors list of dicts is some subset of editors.
+
+    Returns
+    -------
+    Returns the highest capacity category given applicant category preferences
+    as listed in the set.
     """
-    editors.sort(key = operator.itemgetter("capacity"), reverse = True)
-    return editors
+    
+    capacities = [{
+        "capacity": capacity(editors_by_categories(editors, {category})),
+        "category": category
+    } for category in applicant["categories"]]
+
+    sorted_capacities = sorted(capacities, 
+                               key = itemgetter("capacity"), 
+                               reverse = True)
+
+    return sorted_capacities[0]["category"]
