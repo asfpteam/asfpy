@@ -7,6 +7,7 @@ logistic needs.
 
 - [Installation](#installation)
 - [Usage](#usage)
+- [Contributing](#contributing)
   * [Packaging](#packaging)
   * [Authors](#authors)
 
@@ -38,6 +39,8 @@ asfpy.allocate(applicants, editors)
 will run the allocation algorithm, which returns a list of matchings between
 applicants and two editors each. If two editors cannot be matched, the
 applicant remains in an unmatched list.
+
+## Contributing
 
 ### Packaging
 
