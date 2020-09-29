@@ -7,7 +7,11 @@ logistic needs.
 
 ## Installation
 
-This package requires Python 3.6+ and pip 20+, and recommends using the Python 3.8 runtime. To install, run `pip install asfpy-aridyckovsky`.
+This package requires Python 3.6+ and pip 20+, and recommends using the Python 3.8 runtime. To install, run 
+
+```
+pip install asfpy-aridyckovsky
+```
 
 ## Usage 
 
