@@ -23,9 +23,28 @@ SCHOOL = "du"
 # APPLICANT-ONLY METHODS
 #################################################
 
-def rank(applicant):
+def asfp_rank(applicant):
     """
-    Rank an applicant by attribute combinations.
+    Rank an applicant by attribute combinations by the standard ASFP method of
+    ranking by underrepresented minority (URM) status, whether an applicant has
+    limited access (LIM) to mentors in academia and research, and if the applicant
+    is affiliated with the University of Denver (DU).
+
+    Parameters
+    ----------
+    applicant: dict
+        An object that represents an applicant (often within a list) with 
+        attributes including:
+            - "id" a unique string identifier
+            - "urm" a boolean designation of URM status
+            - "lim" a boolean designation of LIM status
+            - "du" a boolean designation of DU affiliation
+
+    Returns
+    -------
+    rank: integer
+        A ranking that represents an applicant's pool relative to an
+        ASFP-designed schema, as clarified through boolean logic in code below.
     """
     is_urm = applicant[URM]
     is_lim = applicant[LIM]
@@ -46,14 +65,27 @@ def rank(applicant):
 
     return rank
 
-def prioritize(applicants):
+def prioritize(applicants, rank_method = asfp_rank):
     """
     Prioritize applicants by rank of attributes.
+
+    Parameters
+    ----------
+    applicants: list
+        The list `applicants` of dicts of each applicant.
+    rank_method: function
+        The method of assinging ranks under label "rank" based on attributes
+        that are necessarily present in items of `applicants`.
+
+    Returns
+    -------
+    applicants: list
+        A copy of applicants is returned, sorted by rank as determined by
+        `rank_method`.
     """
     for a in applicants:
-        a["rank"] = rank(a)
-    applicants.sort(key = operator.itemgetter("rank"))
-    return applicants
+        a["rank"] = rank_method(a)
+    return sorted(applicants, key = operator.itemgetter("rank"))
 
 #################################################
 # EDITOR-ONLY METHODS
