@@ -65,11 +65,11 @@ def editors_by_role(editors, role):
     """
     return [e for e in editors if e["role"] == role]
 
-def editors_by_category(editors, category):
+def editors_by_categories(editors, categories):
     """
     Get a sublist of editors by category
     """
-    return [e for e in editors if category in e["categories"]]
+    return [e for e in editors if e["categories"].intersection(categories)]
 
 def capacity(editors):
     """
@@ -78,3 +78,9 @@ def capacity(editors):
     """
     return sum(e["capacity"] for e in editors)
 
+def sort_editors_by_capacity(editors):
+    """
+    Sort editors by capacity.
+    """
+    editors.sort(key = operator.itemgetter("capacity"), reverse = True)
+    return editors
