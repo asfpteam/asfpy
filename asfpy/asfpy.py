@@ -111,10 +111,10 @@ def capacity(editors):
     return sum(e["capacity"] for e in editors)
 
 
-def find_highest_capacity_editors(applicant, editors):
+def find_highest_capacity_category(applicant, editors):
     """
-    Find the highest capacity group of editors (by category) based on
-    available based on stated category preferences of an applicant.
+    Find the highest capacity category based on editors'
+    availability given stated category preferences of an applicant.
 
     Parameters
     ----------
