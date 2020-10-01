@@ -4,10 +4,12 @@ ASFPy methods
 Say some things about it here.
 """
 
+from pathlib import Path
 from operator import itemgetter
+import csv
 
 #################################################
-# Constants
+# CONSTANTS
 #
 # NOTE: These constants refer to data fields that
 #	are collected in forms, so may be changed
@@ -18,6 +20,29 @@ from operator import itemgetter
 URM = "urm"
 LIM = "lim"
 SCHOOL = "du"
+
+#################################################
+# APPLICANT-ONLY METHODS
+#################################################
+
+def read_preprocessed_editors_list_csv(filename):
+    """
+    Use Python's native CSV reader to load the editors list. Also,
+    convert category stringlists to sets and endow an identifier.
+    """
+    with open(filename) as f:
+        editors = [{k: v for k, v in row.items()}
+            for row in csv.DictReader(f, skipinitialspace=True)]
+
+    n = 1
+    for editor in editors:
+        editor["id"] = "EDI" + str(n).rjust(3, "0")
+        editor["categories"] = set(editor["categories"].split(", "))
+        editor["capacity"] = int(editor["capacity"])
+        
+        n += 1
+
+    return editors
 
 #################################################
 # APPLICANT-ONLY METHODS
