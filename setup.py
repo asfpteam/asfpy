@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="asfpy-aridyckovsky",
-    version="0.1.3",
+    version="0.1.5",
     author="Ari Dyckovsky",
     author_email="aridyckovsky@gmail.com",
     description="A collection of Python scripts for the Application Statement Feedback Program's logistics needs",

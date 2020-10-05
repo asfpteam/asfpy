@@ -4,8 +4,8 @@ ASFPy methods
 Say some things about it here.
 """
 
-from pathlib import Path
 from operator import itemgetter
+import random
 import csv
 
 #################################################
@@ -92,7 +92,8 @@ def asfp_rank(applicant):
 
 def prioritize(applicants, rank_method = asfp_rank):
     """
-    Prioritize applicants by rank of attributes.
+    Prioritize applicants by rank of attributes. Applicants are randomized
+    prior to running the ranking and sorting.
 
     Parameters
     ----------
@@ -108,8 +109,10 @@ def prioritize(applicants, rank_method = asfp_rank):
         A copy of applicants is returned, sorted by rank as determined by
         `rank_method`.
     """
+    applicants = random.sample(applicants, k = len(applicants))
     for a in applicants:
         a["rank"] = rank_method(a)
+
     return sorted(applicants, key = itemgetter("rank"))
 
 #################################################
@@ -208,6 +211,8 @@ def allocate(applicants, editors):
     for applicant in applicants:
 
         potential_editors = editors_by_categories(editors, applicant["categories"])
+        # TODO add a check for editors from DU listed by applicant and remove
+        # them from allocation potential
 
         if capacity(potential_editors) < 2:
         # If the editing capacity for an applicant is less than 2, continue to next applicant
@@ -259,5 +264,6 @@ def allocate(applicants, editors):
 
     return {
         "matchings": matchings,
-        "unmatched": unmatched
+        "unmatched": unmatched,
+        "editors": editors
     }
