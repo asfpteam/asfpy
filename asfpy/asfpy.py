@@ -13,30 +13,55 @@ import csv
 #
 # NOTE: These constants refer to data fields that
 #	are collected in forms, so may be changed
-#	accordingly.
+#	accordingly. The forms should also be
+#	preprocesseed to have the same labels.
+#
 #
 #################################################
 
+FLEXIBLE = "flexible"
 URM = "urm"
 LIM = "lim"
 SCHOOL = "du"
+NO_CONFLICTS_STATEMENT = "I AM NOT APPLYING TO ANY OF THE FOLLOWING PROFESSORS"
 
 #################################################
-# APPLICANT-ONLY METHODS
+# FILE HANDLERS
 #################################################
+
+def _id(pre, pad, i, sep = "_"):
+    """
+    Assign id of string concatenation: `pre + sep + pad + i`, for `i` a 0-padded
+    number, i.e., "002".
+    """
+    return pre + sep + str(i).rjust(pad, "0")
+
+def conflicts(faculty, no_conflict):
+    """
+    Extract faculty conflict of interest names and create set containing those
+    names. First remove the no_conflict statement, if any. Then return faculty.
+    """
+    return {fac for fac in faculty if no_conflict not in fac}
+
+def read_list_csv(filename):
+    """
+    Use Python's native CSV reader to load list.
+    """
+    with open(filename) as f:
+        loaded = [{k: v for k, v in row.items()}
+                for row in csv.DictReader(f, skipinitialspace=True)]
+    return loaded
 
 def read_preprocessed_editors_list_csv(filename):
     """
     Use Python's native CSV reader to load the editors list. Also,
     convert category stringlists to sets and endow an identifier.
     """
-    with open(filename) as f:
-        editors = [{k: v for k, v in row.items()}
-            for row in csv.DictReader(f, skipinitialspace=True)]
+    editors = read_list_csv(filename)
 
     n = 1
     for editor in editors:
-        editor["id"] = "EDI" + str(n).rjust(3, "0")
+        editor["id"] = _id("EDI", 3, n)
         editor["categories"] = set(editor["categories"].split(", "))
         editor["capacity"] = int(editor["capacity"])
         
@@ -44,8 +69,29 @@ def read_preprocessed_editors_list_csv(filename):
 
     return editors
 
+def read_preprocessed_applicants_list_csv(filename):
+    """
+    Use Python's native CSV reader to load the applicant submissions list. Also,
+    convert category stringlists to sets and endow an identifier.
+    """
+    applicants = read_list_csv(filename)
+
+    n = 1
+    for applicant in applicants:
+        applicant["id"] = _id("APP", 3, n)
+        applicant["categories"] = set(applicant["categories"].split(", "))
+        applicant["conflicts"] = conflicts(applicant["conflicts"], NO_CONFLICTS_STATEMENT)
+        applicant[FLEXIBLE] = bool(applicant[FLEXIBLE])
+        applicant[URM] = bool(applicant[URM])
+        applicant[LIM] = bool(applicant[LIM])
+        applicant[SCHOOL] = bool(applicant[SCHOOL])
+
+        n += 1
+
+    return applicants
+
 #################################################
-# APPLICANT-ONLY METHODS
+# APPLICANT PRIORITY METHODS
 #################################################
 
 def asfp_rank(applicant):
@@ -90,6 +136,13 @@ def asfp_rank(applicant):
 
     return rank
 
+def randomize(applicants):
+    """
+    Random permutation of applicant list. Typical usage is before
+    prioritization.
+    """
+    return random.sample(applicants, k = len(applicants))
+
 def prioritize(applicants, rank_method = asfp_rank):
     """
     Prioritize applicants by rank of attributes. Applicants are randomized
@@ -109,7 +162,6 @@ def prioritize(applicants, rank_method = asfp_rank):
         A copy of applicants is returned, sorted by rank as determined by
         `rank_method`.
     """
-    applicants = random.sample(applicants, k = len(applicants))
     for a in applicants:
         a["rank"] = rank_method(a)
 
@@ -201,6 +253,22 @@ def update_capacity(editor_id, editors):
         if editor["id"] == editor_id:
             editor["capacity"] -= 1
 
+def remove_conflicts(applicant, potential_editors):
+    """
+    Remove editors from potential editors who might be sources of conflict of
+    interest. These are typically by name, and not be assigned ASFPy _id
+    generator.
+    """
+    return [editor for editor in potential_editors if
+                editor["name"] not in applicant["conflicts"]]
+
+def find_potential_editors(applicant, editors):
+    """
+    Find potential editors given applicant categories and conflicts.
+    """
+    category_editors = editors_by_categories(editors, applicant["categories"])
+    return remove_conflicts(applicant, category_editors)
+
 def allocate(applicants, editors):
     """
     Allocate applicants to editors.
@@ -210,9 +278,7 @@ def allocate(applicants, editors):
 
     for applicant in applicants:
 
-        potential_editors = editors_by_categories(editors, applicant["categories"])
-        # TODO add a check for editors from DU listed by applicant and remove
-        # them from allocation potential
+        potential_editors = find_potential_editors(applicant, editors)
 
         if capacity(potential_editors) < 2:
         # If the editing capacity for an applicant is less than 2, continue to next applicant
@@ -239,7 +305,7 @@ def allocate(applicants, editors):
                 # If fewer than 2 student editors are available, skip to next
                 # applicant.
                     continue
-                elif applicant["is_flexible"]:
+                elif applicant[FLEXIBLE]:
                 # If an applicant is flexible and prefers to be matched with two
                 # student editors, find first match here.
                     student_editor_match = find_match(applicant, student_editors)
