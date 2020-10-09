@@ -41,7 +41,20 @@ def conflicts(faculty, no_conflict):
     Extract faculty conflict of interest names and create set containing those
     names. First remove the no_conflict statement, if any. Then return faculty.
     """
+    faculty = set(faculty.split(", "))
     return {fac for fac in faculty if no_conflict not in fac}
+
+def categories(categories):
+    """
+    Extract categories from stated categories of respondent.
+    """
+    return set(categories.split(", "))
+
+def get_element_by_id(_id, group_list):
+    """
+    Use next generator to find element in a group's list by identifier.
+    """
+    return next(e for e in group_list if _id == e["id"])
 
 def read_list_csv(filename):
     """
@@ -62,7 +75,7 @@ def read_preprocessed_editors_list_csv(filename):
     n = 1
     for editor in editors:
         editor["id"] = _id("EDI", 3, n)
-        editor["categories"] = set(editor["categories"].split(", "))
+        editor["categories"] = categories(editor["categories"])
         editor["capacity"] = int(editor["capacity"])
         
         n += 1
@@ -79,7 +92,7 @@ def read_preprocessed_applicants_list_csv(filename):
     n = 1
     for applicant in applicants:
         applicant["id"] = _id("APP", 3, n)
-        applicant["categories"] = set(applicant["categories"].split(", "))
+        applicant["categories"] = categories(applicant["categories"])
         applicant["conflicts"] = conflicts(applicant["conflicts"], NO_CONFLICTS_STATEMENT)
         applicant[FLEXIBLE] = bool(applicant[FLEXIBLE])
         applicant[URM] = bool(applicant[URM])
@@ -89,6 +102,16 @@ def read_preprocessed_applicants_list_csv(filename):
         n += 1
 
     return applicants
+
+def write_matchings_list_csv(matchings, filename):
+    """
+    Save dyad-format matchings to CSV list of matchings.
+    """
+    headers = matchings[0].keys()
+    with open(filename, 'w', newline='') as f:
+        w = csv.DictWriter(f, headers)
+        w.writeheader()
+        w.writerows(matchings)
 
 #################################################
 # APPLICANT PRIORITY METHODS
@@ -333,3 +356,47 @@ def allocate(applicants, editors):
         "unmatched": unmatched,
         "editors": editors
     }
+
+
+def format_matchings(matchings, applicants, editors):
+    """
+    Create dyadic format matchings, returning list of dicts with
+    pairings of editors and applicants, including categories and
+    statements with notes from applicants.
+
+    NOTE: The applicants and editors list args expect the original lists with
+        detailed information, not just the output of allocate.
+    """
+    dyads = []
+    for matching in matchings:
+        # Get applicant id from match and then get applicant details
+        # from applicants list
+        applicant_id = matching["applicant"]
+        applicant = get_element_by_id(applicant_id, applicants)
+
+        # Get editor ids and then get both detailed editor elements from list
+        editor_ids = matching["editors"]
+        for editor_id in editor_ids:
+            editor = get_element_by_id(editor_id, editors)
+
+            dyads.append({
+                "editor_id": editor["id"],
+                "editor_email": editor["email"],
+                "editor_categories": ", ".join(str(c) for c in editor["categories"]),
+                "applicant_id": applicant["id"],
+                "applicant_email": applicant["email"],
+                "applicant_statement": applicant["statement"],
+                "applicant_notes": applicant["notes"],
+                "applicant_categories": ", ".join(str(c) for c in applicant["categories"]),
+            })
+            
+    return dyads
+    
+def compile_unmatched_applicants(unmatched, applicants):
+    """
+    Compile list of unmatched applicants after allocation.
+
+    NOTE: unmatched is a list of applicant IDs and applicants in the official
+        list of applicants
+    """
+    return [a for a in applicants if a["id"] in unmatched]
