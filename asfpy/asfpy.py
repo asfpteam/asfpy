@@ -382,8 +382,10 @@ def format_matchings(matchings, applicants, editors):
             dyads.append({
                 "editor_id": editor["id"],
                 "editor_email": editor["email"],
+                "editor_name": editor["name"],
                 "editor_categories": ", ".join(str(c) for c in editor["categories"]),
                 "applicant_id": applicant["id"],
+                "applicant_name": applicant["name"],
                 "applicant_email": applicant["email"],
                 "applicant_statement": applicant["statement"],
                 "applicant_notes": applicant["notes"],
