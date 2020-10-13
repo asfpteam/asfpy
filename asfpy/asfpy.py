@@ -412,7 +412,8 @@ def format_unmatched(unmatched_applicants):
         formatted.append({
             "applicant_id": a["id"],
             "applicant_email": a["email"],
-            "applicant_categories": ', '.join(str(c) for c in a["categories"])
+            "applicant_categories": ', '.join(str(c) for c in a["categories"]),
+            "applicant_rank": a["rank"]
         })
     return formatted
 
