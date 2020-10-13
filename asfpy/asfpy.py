@@ -103,15 +103,15 @@ def read_preprocessed_applicants_list_csv(filename):
 
     return applicants
 
-def write_matchings_list_csv(matchings, filename):
+def write_list_to_csv(lst, filename):
     """
-    Save dyad-format matchings to CSV list of matchings.
+    Save list of dict elements to file.
     """
-    headers = matchings[0].keys()
+    headers = lst[0].keys()
     with open(filename, 'w', newline='') as f:
         w = csv.DictWriter(f, headers)
         w.writeheader()
-        w.writerows(matchings)
+        w.writerows(lst)
 
 #################################################
 # APPLICANT PRIORITY METHODS
@@ -394,11 +394,22 @@ def format_matchings(matchings, applicants, editors):
             
     return dyads
     
-def compile_unmatched_applicants(unmatched, applicants):
+def compile_unmatched(unmatched, applicants):
     """
-    Compile list of unmatched applicants after allocation.
-
-    NOTE: unmatched is a list of applicant IDs and applicants in the official
-        list of applicants
+    Compile list of unmatched applicants after allocation, using the
+      output unmatched IDs from allocate.
     """
     return [a for a in applicants if a["id"] in unmatched]
+
+def format_unmatched(unmatched_applicants):
+    """
+    Format unmatched for CSV save. Use result from compile unmatched.
+    """
+    formatted = []
+    for a in unmatched_applicants:
+        formatted.append({
+            "applicant_id": a["id"],
+            "applicant_email": a["email"],
+            "applicant_categories": ', '.join(str(c) for c in a["categories"])
+        })
+    return formatted
