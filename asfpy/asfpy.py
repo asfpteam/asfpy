@@ -94,10 +94,10 @@ def read_preprocessed_applicants_list_csv(filename):
         applicant["id"] = _id("APP", 3, n)
         applicant["categories"] = categories(applicant["categories"])
         applicant["conflicts"] = conflicts(applicant["conflicts"], NO_CONFLICTS_STATEMENT)
-        applicant[FLEXIBLE] = bool(applicant[FLEXIBLE])
-        applicant[URM] = bool(applicant[URM])
-        applicant[LIM] = bool(applicant[LIM])
-        applicant[SCHOOL] = bool(applicant[SCHOOL])
+        applicant[FLEXIBLE] = bool(int(applicant[FLEXIBLE]))
+        applicant[URM] = bool(int(applicant[URM]))
+        applicant[LIM] = bool(int(applicant[LIM]))
+        applicant[SCHOOL] = bool(int(applicant[SCHOOL]))
 
         n += 1
 
@@ -186,7 +186,9 @@ def prioritize(applicants, rank_method = asfp_rank):
         `rank_method`.
     """
     for a in applicants:
-        a["rank"] = rank_method(a)
+        a.update({
+            "rank": rank_method(a)
+        })
 
     return sorted(applicants, key = itemgetter("rank"))
 
@@ -413,3 +415,19 @@ def format_unmatched(unmatched_applicants):
             "applicant_categories": ', '.join(str(c) for c in a["categories"])
         })
     return formatted
+
+def format_applicant_id_manifest(applicants):
+    """
+    Format list of identified applicants and return sorted list by
+      the identifier.
+    """
+    manifest = []
+    for a in applicants:
+        manifest.append({
+            "applicant_id": a["id"],
+            "applicant_name": a["name"],
+            "applicant_email": a["email"],
+            "applicant_categories": ", ".join(c for c in a["categories"]),
+            "applicant_rank": a["rank"]
+        })
+    return sorted(manifest, key = itemgetter("applicant_id"))
