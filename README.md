@@ -22,6 +22,8 @@ This package requires Python 3.6+ and pip 20+, and recommends using the Python
 pip install asfpy-aridyckovsky
 ```
 
+You can find further installation and versioned distributions at https://pypi.org/project/asfpy-aridyckovsky/.
+
 ## Usage 
 
 Current usage requires importing the namespace directly:
