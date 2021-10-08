@@ -438,8 +438,8 @@ def format_applicant_id_manifest(applicants):
     for a in applicants:
         manifest.append({
             "applicant_id": a["id"],
-            "applicant_first_name": applicant["first"],
-            "applicant_last_name": applicant["last"],
+            "applicant_first_name": a["first"],
+            "applicant_last_name": a["last"],
             "applicant_email": a["email"],
             "applicant_categories": ", ".join(c for c in a[CATEGORIES]),
             "applicant_rank": a["rank"]
