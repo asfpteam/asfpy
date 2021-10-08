@@ -4,14 +4,14 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="asfpy-aridyckovsky",
-    version="0.3.1",
+    name="asfpy-phd",
+    version="0.4.0",
     author="Ari Dyckovsky",
     author_email="aridyckovsky@gmail.com",
     description="A collection of Python scripts for the Application Statement Feedback Program's logistics needs",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/aridyckovsky/asfpy",
+    url="https://github.com/asfpteam/asfpy",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

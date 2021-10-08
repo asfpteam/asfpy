@@ -1,5 +1,5 @@
 """
-ASFPy methods
+ASFP Allocation
 
 Say some things about it here.
 """
@@ -19,30 +19,38 @@ import csv
 #
 #################################################
 
+# field identifiers
 FLEXIBLE = "flexible"
 URM = "urm"
 LIM = "lim"
-SCHOOL = "du"
-NO_CONFLICTS_STATEMENT = "I AM NOT APPLYING TO ANY OF THE FOLLOWING PROFESSORS"
+CATEGORIES = "categories"
+CAPACITY = "capacity"
+COI_FACULTY = "conflicts-faculty"
+COI_UNIVERSITY = "conflicts-university"
+
+# null options for applicants to select on required questions
+NO_CONFLICTS_FACULTY= "I am not applying to any of these faculty."
+NO_CONFLICTS_UNIVERSITY = "My submitted statement is not for ANY of these institutions."
 
 #################################################
 # FILE HANDLERS
 #################################################
 
-def _id(pre, pad, i, sep = "_"):
-    """
-    Assign id of string concatenation: `pre + sep + pad + i`, for `i` a 0-padded
-    number, i.e., "002".
-    """
-    return pre + sep + str(i).rjust(pad, "0")
-
-def conflicts(faculty, no_conflict):
+def faculty_conflicts(faculty):
     """
     Extract faculty conflict of interest names and create set containing those
     names. First remove the no_conflict statement, if any. Then return faculty.
     """
     faculty = set(faculty.split(", "))
-    return {fac for fac in faculty if no_conflict not in fac}
+    return {fac for fac in faculty if NO_CONFLICTS_FACULTY not in fac}
+
+def university_conflicts(universities):
+    """
+    Extract university conflict of interest names and create set containing those
+    names. First remove the no_conflict statement, if any. Then return universities.
+    """
+    universities = set(universities.split(", "))
+    return {uni for uni in universities if NO_CONFLICTS_UNIVERSITY not in uni}
 
 def categories(categories):
     """
@@ -74,9 +82,9 @@ def read_preprocessed_editors_list_csv(filename):
 
     n = 1
     for editor in editors:
-        editor["id"] = _id("EDI", 3, n)
-        editor["categories"] = categories(editor["categories"])
-        editor["capacity"] = int(editor["capacity"])
+        editor[CATEGORIES] = categories(editor[CATEGORIES])
+        editor[CAPACITY] = int(editor[CAPACITY])
+        editor["matchable"] = int(editor["matchable"])
         
         n += 1
 
@@ -91,13 +99,13 @@ def read_preprocessed_applicants_list_csv(filename):
 
     n = 1
     for applicant in applicants:
-        applicant["id"] = _id("APP", 3, n)
-        applicant["categories"] = categories(applicant["categories"])
-        applicant["conflicts"] = conflicts(applicant["conflicts"], NO_CONFLICTS_STATEMENT)
+        applicant[CATEGORIES] = categories(applicant[CATEGORIES])
+        applicant[COI_UNIVERSITY] = university_conflicts(applicant[COI_UNIVERSITY])
+        applicant[COI_FACULTY] = faculty_conflicts(applicant[COI_FACULTY])
+
         applicant[FLEXIBLE] = bool(int(applicant[FLEXIBLE]))
         applicant[URM] = bool(int(applicant[URM]))
         applicant[LIM] = bool(int(applicant[LIM]))
-        applicant[SCHOOL] = bool(int(applicant[SCHOOL]))
 
         n += 1
 
@@ -121,8 +129,7 @@ def asfp_rank(applicant):
     """
     Rank an applicant by attribute combinations by the standard ASFP method of
     ranking by underrepresented minority (URM) status, whether an applicant has
-    limited access (LIM) to mentors in academia and research, and if the applicant
-    is affiliated with the University of Denver (DU).
+    limited access (LIM) to informed mentors.
 
     Parameters
     ----------
@@ -132,7 +139,6 @@ def asfp_rank(applicant):
             - "id" a unique string identifier
             - "urm" a boolean designation of URM status
             - "lim" a boolean designation of LIM status
-            - "du" a boolean designation of DU affiliation
 
     Returns
     -------
@@ -142,20 +148,13 @@ def asfp_rank(applicant):
     """
     is_urm = applicant[URM]
     is_lim = applicant[LIM]
-    is_school = applicant[SCHOOL]
 
-    if (is_urm and is_lim and is_school):
+    if (is_urm and is_lim):
         rank = 0
-    elif (is_urm and is_lim):
-        rank = 1
-    elif (is_urm or is_lim) and is_school:
-        rank = 2
     elif (is_urm or is_lim):
-        rank = 3
-    elif is_school:
-        rank = 4
+        rank = 1
     else:
-        rank = 5
+        rank = 2
 
     return rank
 
@@ -196,24 +195,30 @@ def prioritize(applicants, rank_method = asfp_rank):
 # EDITOR-ONLY METHODS
 #################################################
 
-def editors_by_role(editors, role):
+def faculty_editors(editors):
     """
-    Get a sublist of editors by role.
+    Get a sublist of faculty editors.
     """
-    return [e for e in editors if e["role"] == role]
+    return [e for e in editors if e["role"] == "Faculty"]
+
+def non_faculty_editors(editors):
+    """
+    Get a sublist of non-faculty editors.
+    """
+    return [e for e in editors if e["role"] != "Faculty"]   
 
 def editors_by_categories(editors, categories):
     """
     Get a sublist of editors by category
     """
-    return [e for e in editors if e["categories"].intersection(categories)]
+    return [e for e in editors if e[CATEGORIES].intersection(categories)]
 
 def capacity(editors):
     """
     Compute editing capacity, the number of statements an editor
     can read, for a list of editors.
     """
-    return sum(e["capacity"] for e in editors)
+    return sum(e[CAPACITY] for e in editors)
 
 
 def find_highest_capacity_category(applicant, editors):
@@ -238,10 +243,10 @@ def find_highest_capacity_category(applicant, editors):
     capacities = [{
         "capacity": capacity(editors_by_categories(editors, {category})),
         "category": category
-    } for category in applicant["categories"]]
+    } for category in applicant[CATEGORIES]]
 
     sorted_capacities = sorted(capacities, 
-                               key = itemgetter("capacity"), 
+                               key = itemgetter(CAPACITY), 
                                reverse = True)
 
     return sorted_capacities[0]["category"]
@@ -258,7 +263,7 @@ def find_match(applicant, editors):
 
         highest_capacity_editors = sorted(
             editors_by_categories(editors, {highest_capacity_category}),
-            key = itemgetter("capacity"),
+            key = itemgetter(CAPACITY),
             reverse = True
         )
 
@@ -276,8 +281,9 @@ def update_capacity(editor_id, editors):
     """
     for editor in editors:
         if editor["id"] == editor_id:
-            editor["capacity"] -= 1
+            editor[CAPACITY] -= 1
 
+# TODO: handle both faculty and university editors
 def remove_conflicts(applicant, potential_editors):
     """
     Remove editors from potential editors who might be sources of conflict of
@@ -291,7 +297,7 @@ def find_potential_editors(applicant, editors):
     """
     Find potential editors given applicant categories and conflicts.
     """
-    category_editors = editors_by_categories(editors, applicant["categories"])
+    category_editors = editors_by_categories(editors, applicant[CATEGORIES])
     return remove_conflicts(applicant, category_editors)
 
 def allocate(applicants, editors):
@@ -315,28 +321,28 @@ def allocate(applicants, editors):
                 "editors": []
             }
 
-            faculty_editors = editors_by_role(potential_editors, "faculty")
-            student_editors = editors_by_role(potential_editors, "student")
+            _faculty_editors = faculty_editors(potential_editors)
+            _non_faculty_editors = non_faculty_editors(potential_editors)
 
-            faculty_editor_match = find_match(applicant, faculty_editors)
+            faculty_editor_match = find_match(applicant, _faculty_editors)
 
-            if (faculty_editor_match is not None) and (capacity(student_editors) > 0):
+            if (faculty_editor_match is not None) and (capacity(_non_faculty_editors) > 0):
             # If a faculty editor match is possible and at least one student editor
             # match is possible, then add a faculty editor match and update capacity.
                 _match["editors"].append(faculty_editor_match)
-                update_capacity(faculty_editor_match, faculty_editors)
+                update_capacity(faculty_editor_match, _faculty_editors)
             else:
-                if capacity(student_editors) < 2:
+                if capacity(_non_faculty_editors) < 2:
                 # If fewer than 2 student editors are available, skip to next
                 # applicant.
                     continue
                 elif applicant[FLEXIBLE]:
                 # If an applicant is flexible and prefers to be matched with two
                 # student editors, find first match here.
-                    student_editor_match = find_match(applicant, student_editors)
-                    if student_editor_match is not None:
-                        _match["editors"].append(student_editor_match)
-                        update_capacity(student_editor_match, student_editors)
+                    non_faculty_editor_match = find_match(applicant, _non_faculty_editors)
+                    if non_faculty_editor_match is not None:
+                        _match["editors"].append(non_faculty_editor_match)
+                        update_capacity(non_faculty_editor_match, _non_faculty_editors)
                 else:
                 # If applicant prefers not to have a match if at least one faculty
                 # editor is not available, then continue to next applicant.
@@ -344,9 +350,9 @@ def allocate(applicants, editors):
 
             # Add a second editor: A student editor match. Then update
             # capacity of that editor.
-            student_editor_match = find_match(applicant, student_editors)
-            _match["editors"].append(student_editor_match)
-            update_capacity(student_editor_match, student_editors)
+            non_faculty_editor_match = find_match(applicant, _non_faculty_editors)
+            _match["editors"].append(non_faculty_editor_match)
+            update_capacity(non_faculty_editor_match, _non_faculty_editors)
 
             # Append the match to matchings and remove this applicant
             # from the list of unmatched applicants.
@@ -385,13 +391,13 @@ def format_matchings(matchings, applicants, editors):
                 "editor_id": editor["id"],
                 "editor_email": editor["email"],
                 "editor_name": editor["name"],
-                "editor_categories": ", ".join(str(c) for c in editor["categories"]),
+                "editor_categories": ", ".join(str(c) for c in editor[CATEGORIES]),
                 "applicant_id": applicant["id"],
                 "applicant_name": applicant["name"],
                 "applicant_email": applicant["email"],
                 "applicant_statement": applicant["statement"],
                 "applicant_notes": applicant["notes"],
-                "applicant_categories": ", ".join(str(c) for c in applicant["categories"]),
+                "applicant_categories": ", ".join(str(c) for c in applicant[CATEGORIES]),
             })
             
     return dyads
@@ -412,7 +418,7 @@ def format_unmatched(unmatched_applicants):
         formatted.append({
             "applicant_id": a["id"],
             "applicant_email": a["email"],
-            "applicant_categories": ', '.join(str(c) for c in a["categories"]),
+            "applicant_categories": ', '.join(str(c) for c in a[CATEGORIES]),
             "applicant_rank": a["rank"]
         })
     return formatted
@@ -428,7 +434,7 @@ def format_applicant_id_manifest(applicants):
             "applicant_id": a["id"],
             "applicant_name": a["name"],
             "applicant_email": a["email"],
-            "applicant_categories": ", ".join(c for c in a["categories"]),
+            "applicant_categories": ", ".join(c for c in a[CATEGORIES]),
             "applicant_rank": a["rank"]
         })
     return sorted(manifest, key = itemgetter("applicant_id"))
