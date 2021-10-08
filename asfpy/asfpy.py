@@ -205,13 +205,19 @@ def non_faculty_editors(editors):
     """
     Get a sublist of non-faculty editors.
     """
-    return [e for e in editors if e["role"] != "Faculty"]   
+    return [e for e in editors if e["role"] != "Faculty"]
 
 def editors_by_categories(editors, categories):
     """
-    Get a sublist of editors by category
+    Get a sublist of editors by categories
     """
     return [e for e in editors if e[CATEGORIES].intersection(categories)]
+
+def editors_by_universities(editors, universities):
+    """
+    Get sublist of editors by universities
+    """
+    return [e for e in editors if e["university"].intersection(universities)]
 
 def capacity(editors):
     """
@@ -219,7 +225,6 @@ def capacity(editors):
     can read, for a list of editors.
     """
     return sum(e[CAPACITY] for e in editors)
-
 
 def find_highest_capacity_category(applicant, editors):
     """
@@ -287,11 +292,11 @@ def update_capacity(editor_id, editors):
 def remove_conflicts(applicant, potential_editors):
     """
     Remove editors from potential editors who might be sources of conflict of
-    interest. These are typically by name, and not be assigned ASFPy _id
-    generator.
+    interest. These are typically by name or university.
     """
     return [editor for editor in potential_editors if
-                editor["name"] not in applicant["conflicts"]]
+                not (editor["name"] in applicant["conflicts-faculty"] or 
+                    editor["universities"] in applicant["conflicts-university"])]
 
 def find_potential_editors(applicant, editors):
     """
@@ -393,7 +398,8 @@ def format_matchings(matchings, applicants, editors):
                 "editor_name": editor["name"],
                 "editor_categories": ", ".join(str(c) for c in editor[CATEGORIES]),
                 "applicant_id": applicant["id"],
-                "applicant_name": applicant["name"],
+                "applicant_first_name": applicant["first"],
+                "applicant_last_name": applicant["last"],
                 "applicant_email": applicant["email"],
                 "applicant_statement": applicant["statement"],
                 "applicant_notes": applicant["notes"],
@@ -433,6 +439,8 @@ def format_applicant_id_manifest(applicants):
         manifest.append({
             "applicant_id": a["id"],
             "applicant_name": a["name"],
+            "applicant_first_name": applicant["first"],
+            "applicant_last_name": applicant["last"],
             "applicant_email": a["email"],
             "applicant_categories": ", ".join(c for c in a[CATEGORIES]),
             "applicant_rank": a["rank"]
