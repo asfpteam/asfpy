@@ -355,14 +355,15 @@ def allocate(applicants, editors):
 
             # Add a second editor: A student editor match. Then update
             # capacity of that editor.
-            non_faculty_editor_match = find_match(applicant, _non_faculty_editors)
+            non_faculty_editor_match = find_match(applicant, [e for e in _non_faculty_editors if e["id"] not in _match["editors"]])
             _match["editors"].append(non_faculty_editor_match)
             update_capacity(non_faculty_editor_match, _non_faculty_editors)
 
             if ('Clinical Psychology' not in applicant[CATEGORIES]):
                 # Add a third editor: A student editor match. Then update
                 # capacity of that editor.
-                non_faculty_editor_match = find_match(applicant, _non_faculty_editors)
+
+                non_faculty_editor_match = find_match(applicant, [e for e in _non_faculty_editors if e["id"] not in _match["editors"]])
                 _match["editors"].append(non_faculty_editor_match)
                 update_capacity(non_faculty_editor_match, _non_faculty_editors)
 
