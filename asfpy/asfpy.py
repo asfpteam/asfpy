@@ -359,23 +359,46 @@ def allocate(applicants, editors):
             _match["editors"].append(non_faculty_editor_match)
             update_capacity(non_faculty_editor_match, _non_faculty_editors)
 
-            if ('Clinical Psychology' not in applicant[CATEGORIES]):
+            #if ('Clinical Psychology' not in applicant[CATEGORIES]):
                 # Add a third editor: A student editor match. Then update
                 # capacity of that editor.
 
-                non_faculty_editor_match = find_match(applicant, [e for e in _non_faculty_editors if e["id"] not in _match["editors"]])
-                _match["editors"].append(non_faculty_editor_match)
-                update_capacity(non_faculty_editor_match, _non_faculty_editors)
+            #    non_faculty_editor_match = find_match(applicant, [e for e in _non_faculty_editors if e["id"] not in _match["editors"]])
+            #    _match["editors"].append(non_faculty_editor_match)
+            #    update_capacity(non_faculty_editor_match, _non_faculty_editors)
 
             # Append the match to matchings and remove this applicant
             # from the list of unmatched applicants.
             matchings.append(_match)
             unmatched.remove(applicant["id"])
 
+    if capacity(editors) > 0:
+    # After assigning 2-pieces-of-feedback-per-applicant, check for extra
+    # capacity by editors, then try to allocate to highest priority applicants again
+
+        matched_applicants_ids = [a['applicant'] for a in matchings]
+        matched_applicants = [a for a in applicants if a['id'] in matched_applicants_ids]
+
+        available_editors = [e for e in editors if e['capacity'] > 0]
+
+        for applicant in matched_applicants:
+
+            curr_match = [a for a in matchings if a['applicant'] == applicant['id']][0]
+            curr_editors = curr_match['editors']
+            potential_editors = find_potential_editors(applicant, available_editors)
+            if capacity(potential_editors) > 0:
+                extra_editors = non_faculty_editors(potential_editors)
+                extra_match = find_match(
+                    applicant,
+                    [e for e in extra_editors if e["id"] not in curr_match["editors"]]
+                )
+                curr_match['editors'].append(extra_match)
+                update_capacity(extra_match, extra_editors)
+
     return {
         "matchings": matchings,
         "unmatched": unmatched,
-        "editors": editors
+        "editors": editors,
     }
 
 
