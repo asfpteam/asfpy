@@ -392,8 +392,11 @@ def allocate(applicants, editors):
                     applicant,
                     [e for e in extra_editors if e["id"] not in curr_match["editors"]]
                 )
-                curr_match['editors'].append(extra_match)
-                update_capacity(extra_match, extra_editors)
+                if (extra_match is not None):
+                    curr_match['editors'].append(extra_match)
+                    update_capacity(extra_match, extra_editors)
+                else:
+                    continue
 
     return {
         "matchings": matchings,
